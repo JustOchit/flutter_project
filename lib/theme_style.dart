@@ -145,6 +145,7 @@ class CustomTextField extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool obscureText;
+  final Widget? suffixIcon;
 
   const CustomTextField({
     super.key,
@@ -152,6 +153,7 @@ class CustomTextField extends StatelessWidget {
     required this.label,
     required this.icon,
     this.obscureText = false,
+    this.suffixIcon,
   });
 
   @override
@@ -162,6 +164,7 @@ class CustomTextField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: AppStyle.firstColor),
+        suffixIcon: suffixIcon, // Include the suffixIcon here
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30.0),
         ),
@@ -181,6 +184,7 @@ class CustomTextField extends StatelessWidget {
     );
   }
 }
+
 
 class CustomElevatedButton extends StatelessWidget {
   final String text;

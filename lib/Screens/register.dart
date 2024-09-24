@@ -18,10 +18,12 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final ImagePicker _picker = ImagePicker();
+  bool _isPasswordHidden = true;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _classController = TextEditingController();
 
   File? _profileImage;
   bool _isLoading = false;
@@ -36,39 +38,40 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _registerUser() async {
-    setState(() {
-      _isLoading = true;
-    });
+  setState(() {
+    _isLoading = true;
+  });
 
-    try {
-      UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
+  try {
+    UserCredential userCredential =
+        await _auth.createUserWithEmailAndPassword(
+      email: _emailController.text,
+      password: _passwordController.text,
+    );
 
-      if (userCredential.user != null) {
-        await saveProfile(userCredential.user!.uid);
-      }
-    } catch (e) {
-      print(e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+    if (userCredential.user != null) {
+      await saveProfile(userCredential.user!.uid);
     }
+  } catch (e) {
+    print(e);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
 
   Future<void> saveProfile(String uid) async {
     String name = _nameController.text;
     String password = _passwordController.text;
     String email = _emailController.text;
+    String kelas = _classController.text;
 
     if (_profileImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -77,35 +80,39 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+  setState(() {
+    _isLoading = true;
+  });
 
-    try {
-      Uint8List imageBytes = await _profileImage!.readAsBytes();
-      String resp = await StoreData().saveData(
-          name: name, password: password, email: email, file: imageBytes);
+  try {
+    Uint8List imageBytes = await _profileImage!.readAsBytes();
+    String resp = await StoreData().saveData(
+        name: name,
+        password: password,
+        email: email,
+        file: imageBytes,
+        kelas: kelas);
 
-      if (resp == 'success') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $resp')),
-        );
-      }
-    } catch (err) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $err')),
+    if (resp == 'success') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
       );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $resp')),
+      );
     }
+  } catch (err) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $err')),
+    );
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -160,6 +167,12 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
           SizedBox(height: 20),
           CustomTextField(
+            controller: _classController,
+            label: 'Kelas',
+            icon: Icons.class_,
+          ),
+          SizedBox(height: 20),
+          CustomTextField(
             controller: _emailController,
             label: 'Email',
             icon: Icons.email,
@@ -169,7 +182,18 @@ class _RegisterPageState extends State<RegisterPage> {
             controller: _passwordController,
             label: 'Password',
             icon: Icons.lock,
-            obscureText: true,
+            obscureText: _isPasswordHidden,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _isPasswordHidden ? Icons.visibility_off : Icons.visibility,
+                color: AppStyle.gryColor,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isPasswordHidden = !_isPasswordHidden;
+                });
+              },
+            ),
           ),
           SizedBox(height: 30),
           CustomElevatedButton(
@@ -217,21 +241,21 @@ class StoreData {
     required String name,
     required String password,
     required Uint8List file,
-    required String email, // Make sure to pass the email
+    required String email,
+    required String kelas,
   }) async {
     String resp = "Some Error Occurred";
     try {
-      if (name.isNotEmpty && password.isNotEmpty && email.isNotEmpty) {
-        String imageUrl =
-            await uploadImageToStorage('profileImage', file); // Upload image
+      if (name.isNotEmpty && password.isNotEmpty && email.isNotEmpty && kelas.isNotEmpty) {
+        String imageUrl = await uploadImageToStorage('profileImage', file);
         await _firestore
             .collection('userProfile')
             .doc(_auth.currentUser!.uid)
             .set({
           'name': name,
-          'password':
-              password, // Not recommended, consider using Firebase Auth for password handling
-          'email': email, // Store the user's email in Firestore
+          'kelas': kelas,
+          'password': password,
+          'email': email,
           'imageLink': imageUrl,
         });
         resp = 'success';
