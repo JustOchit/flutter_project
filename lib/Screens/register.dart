@@ -38,34 +38,34 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _registerUser() async {
-  setState(() {
-    _isLoading = true;
-  });
-
-  try {
-    UserCredential userCredential =
-        await _auth.createUserWithEmailAndPassword(
-      email: _emailController.text,
-      password: _passwordController.text,
-    );
-
-    if (userCredential.user != null) {
-      await saveProfile(userCredential.user!.uid);
-    }
-  } catch (e) {
-    print(e);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Error: $e'),
-        backgroundColor: Colors.red,
-      ),
-    );
-  } finally {
     setState(() {
-      _isLoading = false;
+      _isLoading = true;
     });
+
+    try {
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      if (userCredential.user != null) {
+        await saveProfile(userCredential.user!.uid);
+      }
+    } catch (e) {
+      print(e);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
-}
 
   Future<void> saveProfile(String uid) async {
     String name = _nameController.text;
@@ -80,39 +80,39 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-  setState(() {
-    _isLoading = true;
-  });
-
-  try {
-    Uint8List imageBytes = await _profileImage!.readAsBytes();
-    String resp = await StoreData().saveData(
-        name: name,
-        password: password,
-        email: email,
-        file: imageBytes,
-        kelas: kelas);
-
-    if (resp == 'success') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $resp')),
-      );
-    }
-  } catch (err) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $err')),
-    );
-  } finally {
     setState(() {
-      _isLoading = false;
+      _isLoading = true;
     });
+
+    try {
+      Uint8List imageBytes = await _profileImage!.readAsBytes();
+      String resp = await StoreData().saveData(
+          name: name,
+          password: password,
+          email: email,
+          file: imageBytes,
+          kelas: kelas);
+
+      if (resp == 'success') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $resp')),
+        );
+      }
+    } catch (err) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $err')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +246,10 @@ class StoreData {
   }) async {
     String resp = "Some Error Occurred";
     try {
-      if (name.isNotEmpty && password.isNotEmpty && email.isNotEmpty && kelas.isNotEmpty) {
+      if (name.isNotEmpty &&
+          password.isNotEmpty &&
+          email.isNotEmpty &&
+          kelas.isNotEmpty) {
         String imageUrl = await uploadImageToStorage('profileImage', file);
         await _firestore
             .collection('userProfile')
